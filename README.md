@@ -25,6 +25,12 @@ sail artisan migrate
 sail artisan db:seed
 ```
 
+Prepare 
+
+```bash
+npm install && npm run dev
+```
+
 ## Usage
 
 Check [local website](http://localhost)
