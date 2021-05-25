@@ -2,49 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ReservationRequest;
+use App\Messages;
 use App\Models\Seat;
 use App\Services\SeatReservation;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class ReservationController extends Controller
 {
 
 
-    public function reserveSeat(Request $request)
+    public function reserveSeat(ReservationRequest $request)
     {
-        if (!Auth::check()) {
-            return response()->json(['message' => 'Not authorized'], 401);
-        }
-        $validator = Validator::make($request->all(), [
-            "uuid" => ['required', 'string', 'exists:seats,uuid']
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['message' => 'Bad request'], 400);
-        }
-
-        $input = $validator->validated();
+        $input = $request->validated();
 
         if ($service = SeatReservation::reserve($input['uuid'])) {
             return response()->json(['success' => true]);
 
         }
-        return response()->json(['success' => false, 'message' => 'seat is alerady occupied']);
-
+        return response()->json(['success' => false, 'message' => Messages::SEAT_IS_ALREADY_OCCUPIED]);
 
     }
 
     public function checkSeat(Request $request, $uuid)
     {
         /** @var Seat $seat */
-        if ($seat = SeatReservation::check($uuid)) {
+        if ($seat = SeatReservation::findSeat($uuid)) {
             $response = [
-                'vacant' => is_null($seat->reservation) ? true : false,
+                'vacant' => SeatReservation::hasSeatReservation($seat) ? false : true,
             ];
 
-            if (is_null($seat->reservation)) {
+            if (SeatReservation::hasSeatReservation($seat)) {
                 $response['price'] = $seat->price;
             }
             return response()->json($response);
